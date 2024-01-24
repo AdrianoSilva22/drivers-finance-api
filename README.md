@@ -14,7 +14,7 @@ Bem-vindo à documentação da API Drivers Finance! Esta API é projetada para a
 1. Clone o repositório:
 
    ```bash
-   git clone https://github.com/seu-usuario/drivers-finance-api.git
+   git clone https://github.com/AdrianoSilva22/drivers-finance-api.git
    cd drivers-finance-api
 Instale as dependências:
 
@@ -61,7 +61,7 @@ Copy code
     "incomeDescription": "Corrida de aplicativo Uber",
     "incomeType": "variable",
     "incomeAmount": 50.56,
-    "driverCpf": 10657899872
+    "driverCpf":XXXXXXXXXXX
 }
 Resposta de Sucesso: 200 OK
 Resposta de Erro: 404 Error
@@ -76,18 +76,15 @@ Copy code
     "expenseDescription": "Gasolina",
     "expenseType": "fixed",
     "expenseAmount": 205.22,
-    "driverCpf": 10657899872
+    "driverCpf": XXXXXXXXXXX
 }
 Resposta de Sucesso: 200 OK
 Resposta de Erro: 404 Error
 
-4. Visualizar Resumo Financeiro
-Endpoint: GET /financialSummary
-Descrição: Obtém um resumo financeiro para o motorista.
-Parâmetros da Requisição:
-driverCpf (Número de CPF do motorista)
-Resposta de Sucesso: 200 OK
-Resposta de Erro: 404 Error
+AH, caso você queira olhar o seu saldo,
+seja valor, ou se ta negativado / positivo, é simples ,
+ basta chamar a rota get de drive, cuja URL é : 
+ /getTotalBalance/:cpf .
 
 
 Contribuições
