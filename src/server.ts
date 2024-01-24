@@ -1,17 +1,20 @@
-import express from 'express'
 import cors from 'cors'
-import usuario from './routes/usuario'
-
+import express from 'express'
+import driver from './routes/driver'
+import expense from './routes/expense'
+import income from './routes/income'
 const app = express()
 
 app.use(cors())
 
 app.use(express.json())
 
-app.use('/usuario', usuario)
+app.use('/driver', driver)
+app.use('/income', income)
+app.use('/expense', expense)
+
 
 const port = 3003
 app.listen(port, () => console.log(`funcionando na porta ${port}`))
 
-export default app
 
