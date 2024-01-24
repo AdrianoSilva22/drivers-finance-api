@@ -1,3 +1,4 @@
+import { compare, hash } from 'bcrypt';
 import express, { Request, Response } from 'express';
 import { check, validationResult } from 'express-validator';
 import connection from '../config/connection';
@@ -40,13 +41,14 @@ router.post('/save',
 
     const driver: Driver = req.body
 
+    const passwordHash = await hash(driver.senha, 10)
     const sql = `INSERT INTO driver (cpf, name, email, senha, phone_number, active, genero, registration_datetime) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 
     const values = [
       driver.cpf,
       driver.name,
       driver.email,
-      driver.senha,
+      passwordHash,
       driver.phone_number,
       driver.active,
       driver.genero,
@@ -54,9 +56,9 @@ router.post('/save',
     ]
 
     try {
+
       const con = await connection.getConnection()
       await connection.query(sql, values)
-
       con.release()
       res.status(200).send("Motorista cadastrado com sucesso")
 
@@ -97,7 +99,9 @@ router.post('/login',
       const queryResult = await connection.query(sql, values)
       const passwordArrayResult = queryResult[0] as { senha: string }[]
 
-      if (driver.senha == passwordArrayResult[0].senha) {
+      const correctPasswordVerified = await compare(driver.senha, passwordArrayResult[0].senha)
+
+      if (correctPasswordVerified) {
         res.send('Login bem-sucedido!')
         con.release()
 
