@@ -8,7 +8,7 @@ import { getTotalIncome } from './income';
 
 const router = express.Router()
 
-const getCurrentDateTimeMySQLFormat = () => {
+export const getCurrentDateTimeMySQLFormat = () => {
   const now = new Date()
 
   const year = now.getFullYear()

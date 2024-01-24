@@ -2,24 +2,9 @@ import express, { Request, Response } from 'express'
 import { check, validationResult } from 'express-validator'
 import connection from '../config/connection'
 import { Income } from '../models/incomeModel'
+import { getCurrentDateTimeMySQLFormat } from './driver'
 
 const router = express.Router()
-
-const getCurrentDateTimeMySQLFormat = () => {
-    const now = new Date();
-
-    const year = now.getFullYear();
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const day = now.getDate().toString().padStart(2, '0');
-
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    const seconds = now.getSeconds().toString().padStart(2, '0');
-
-    const mysqlDatetime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-
-    return mysqlDatetime;
-}
 
 router.post('/save',
     [
@@ -98,7 +83,7 @@ router.get('/get/:id', async (req: Request, res: Response) => {
             res.send(result).status(200)
         }
     } catch (error) {
-        res.status(404).send('Erro ao buscar usuário')
+        res.status(404).send('erro ao buscar Receita')
         return null
     }
 })
