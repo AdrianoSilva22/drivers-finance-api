@@ -2,7 +2,7 @@ import { compare, hash } from 'bcrypt';
 import express, { Request, Response } from 'express';
 import { check, validationResult } from 'express-validator';
 import connection from '../config/connection';
-import { Driver } from '../models/driverModel';
+import { Driver, trueActive } from '../models/driverModel';
 import { getTotalExpense } from './expense';
 import { getTotalIncome } from './income';
 
@@ -50,7 +50,7 @@ router.post('/save',
       driver.email,
       passwordHash,
       driver.phone_number,
-      driver.active,
+      trueActive(),
       driver.genero,
       getCurrentDateTimeMySQLFormat(),
     ]
