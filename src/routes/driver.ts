@@ -114,7 +114,7 @@ router.post('/login',
     }
   })
 
-router.get('/search', async (req: Request, res: Response) => {
+router.get('/getTotal', async (req: Request, res: Response) => {
   const sql = ` SELECT * FROM driver `
 
   try {
@@ -127,7 +127,7 @@ router.get('/search', async (req: Request, res: Response) => {
   }
 })
 
-router.get('/search/:cpf', async (req: Request, res: Response) => {
+router.get('/get/:cpf', async (req: Request, res: Response) => {
   const { cpf } = req.params
   const sql = `SELECT * FROM driver WHERE cpf = ${cpf}`
 
