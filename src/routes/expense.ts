@@ -44,7 +44,7 @@ router.post('/save',
     })
 
 export const getTotalExpense = async (cpf: string) => {
-    const sql = `SELECT expense_amount FROM expense where driver_cpf = ${cpf} `
+    const sql = `SELECT expense_amount FROM expense where driver_cpf = '${cpf}' `
 
     try {
         await connection.getConnection()
@@ -62,7 +62,7 @@ export const getTotalExpense = async (cpf: string) => {
     }
 }
 
-router.get('/getTotalExpense/:cpf', async (req: Request, res: Response) => {
+router.get('/getTotalExpenseAmount/:cpf', async (req: Request, res: Response) => {
     const { cpf } = req.params
     try {
         const totalExpense = await getTotalExpense(cpf)
