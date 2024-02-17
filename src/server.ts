@@ -7,6 +7,9 @@ const app = express()
 
 app.use(cors())
 
+import * as dotenv from "dotenv"
+dotenv.config()
+
 app.use(express.json())
 
 app.use('/driver', driver)

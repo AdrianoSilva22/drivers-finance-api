@@ -1,10 +1,14 @@
 import { compare, hash } from 'bcrypt';
+import * as dotenv from "dotenv";
 import express, { Request, Response } from 'express';
 import { check, validationResult } from 'express-validator';
+import jwt from "jsonwebtoken";
 import connection from '../config/connection';
 import { Driver, trueActive } from '../models/driverModel';
 import { getTotalExpense } from './expense';
 import { getTotalIncome } from './income';
+dotenv.config()
+
 
 const router = express.Router()
 
@@ -50,7 +54,7 @@ router.post('/save',
       driver.email,
       passwordHash,
       driver.phone_number,
-      trueActive(),
+      trueActive(true),
       driver.genero,
       getCurrentDateTimeMySQLFormat(),
     ]
@@ -63,11 +67,14 @@ router.post('/save',
       res.status(200).send("Motorista cadastrado com sucesso")
 
     } catch (error: any) {
+      console.error(error)
       if (error.errno == 1062) {
         if (error.sqlMessage.includes('driver.email')) {
           res.status(400).send("O e-mail fornecido já está em uso. Por favor, escolha outro.")
         } else if (error.sqlMessage.includes('driver.phone_number')) {
           res.status(400).send('O número de telefone fornecido já está em uso.')
+        } else if (error.sqlMessage.includes('driver.PRIMARY')) {
+          res.status(400).send('CPF já está Cadastrado')
         } else {
           res.status(400).send("Ocorreu um erro ao tentar salvar o motorista. Por favor, tente novamente.")
         }
@@ -76,8 +83,7 @@ router.post('/save',
   })
 
 router.post('/login',
-  [check('email').notEmpty().withMessage('O campo de login não pode estar vazio!'),
-  check('senha').isLength({ min: 8 }).withMessage('O campo senha deve ter no mínimo 8 caracteres!')],
+  [check('email').notEmpty().withMessage('O campo de login não pode estar vazio!'),],
 
   async (req: Request, res: Response) => {
     const erros = validationResult(req)
@@ -99,10 +105,20 @@ router.post('/login',
       const queryResult = await connection.query(sql, values)
       const passwordArrayResult = queryResult[0] as { senha: string }[]
 
+      const SECRET = process.env.SECRET;
+      console.log(SECRET)
+    
+      if (!SECRET) {
+        throw new Error('Chave secreta não definida!');
+      } 
+      const token = jwt.sign({ name: driver.name }, SECRET, {
+        expiresIn: 2 * 60
+      })
+
       const correctPasswordVerified = await compare(driver.senha, passwordArrayResult[0].senha)
 
       if (correctPasswordVerified) {
-        res.send('Login bem-sucedido!')
+        res.status(200).send(token)
         con.release()
 
       } else {
@@ -156,7 +172,7 @@ router.put('/update/:cpf', async (req: Request, res: Response) => {
     driver.email,
     driver.senha,
     driver.phone_number,
-    driver.active,
+    trueActive(true),
     driver.genero,
   ]
   try {

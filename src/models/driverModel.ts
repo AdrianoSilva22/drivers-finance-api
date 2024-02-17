@@ -4,10 +4,9 @@ export interface Driver {
     email: string
     senha: string
     genero: string
-    active: boolean
     phone_number: string
   }
 
-  export const trueActive = () => {
-    return `true`
+  export const trueActive = (active: boolean) => {
+    return active = true
   }
