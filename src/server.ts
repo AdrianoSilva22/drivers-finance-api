@@ -16,8 +16,6 @@ app.use('/driver', driver)
 app.use('/income', income)
 app.use('/expense', expense)
 
-
-const port = 3003
-app.listen(port, () => console.log(`funcionando na porta ${port}`))
+app.listen(process.env.PORT, () => console.log(`funcionando na porta ${process.env.PORT}`))
 
 

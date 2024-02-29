@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express'
 import { check, validationResult } from 'express-validator'
-import connection from '../config/connection'
+import connection from '../config/connectionDb'
 import { Income } from '../models/incomeModel'
 import { getCurrentDateTimeMySQLFormat } from './driver'
 
