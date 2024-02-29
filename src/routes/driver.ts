@@ -1,16 +1,18 @@
-import { compare, hash } from 'bcrypt';
+import { hash } from 'bcrypt';
 import * as dotenv from "dotenv";
 import express, { Request, Response } from 'express';
 import { check, validationResult } from 'express-validator';
-import jwt from "jsonwebtoken";
-import connection from '../config/connection';
+import connection from '../config/connectionDb';
 import { Driver, trueActive } from '../models/driverModel';
+import { driverRepository } from '../repositories/driverRepository';
+import { handleRequestValidation } from '../utils/expressValidationUtils';
 import { getTotalExpense } from './expense';
 import { getTotalIncome } from './income';
 dotenv.config()
 
 
 const router = express.Router()
+const { login } = driverRepository()
 
 export const getCurrentDateTimeMySQLFormat = () => {
   const now = new Date()
@@ -28,103 +30,101 @@ export const getCurrentDateTimeMySQLFormat = () => {
   return mysqlDatetime
 }
 
-router.post('/save',
-  [
-    check('email').notEmpty().withMessage('O campo de e-mail não pode estar vazio!').isEmail().withMessage('Informe um e-mail válido'),
-    check('name').notEmpty().withMessage('O campo nome não pode estar vazio!'),
-    check('senha').isLength({ min: 8 }).withMessage('O campo senha deve ter no mínimo 8 caracteres!'),
-    check('genero').notEmpty().withMessage('O campo gênero não pode estar vazio!')
-  ],
+const verify =
 
-  async (req: Request, res: Response) => {
-    const erros = validationResult(req)
+  router.post('/save',
+    [
+      check('email').notEmpty().withMessage('O campo de e-mail não pode estar vazio!').isEmail().withMessage('Informe um e-mail válido'),
+      check('name').notEmpty().withMessage('O campo nome não pode estar vazio!'),
+      check('senha').isLength({ min: 8 }).withMessage('O campo senha deve ter no mínimo 8 caracteres!'),
+      check('genero').notEmpty().withMessage('O campo gênero não pode estar vazio!')
+    ],
 
-    if (!erros.isEmpty()) {
-      return res.status(400).json({ errors: erros.array() })
-    }
+    async (req: Request, res: Response) => {
+      const erros = validationResult(req)
 
-    const driver: Driver = req.body
+      if (!erros.isEmpty()) {
+        return res.status(400).json({ errors: erros.array() })
+      }
 
-    const passwordHash = await hash(driver.senha, 10)
-    const sql = `INSERT INTO driver (cpf, name, email, senha, phone_number, active, genero, registration_datetime) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      const driver: Driver = req.body
 
-    const values = [
-      driver.cpf,
-      driver.name,
-      driver.email,
-      passwordHash,
-      driver.phone_number,
-      trueActive(true),
-      driver.genero,
-      getCurrentDateTimeMySQLFormat(),
-    ]
+      const passwordHash = await hash(driver.senha, 10)
+      const sql = `INSERT INTO driver (cpf, name, email, senha, phone_number, active, genero, registration_datetime) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 
-    try {
+      const values = [
+        driver.cpf,
+        driver.name,
+        driver.email,
+        passwordHash,
+        driver.phone_number,
+        trueActive(true),
+        driver.genero,
+        getCurrentDateTimeMySQLFormat(),
+      ]
 
-      const con = await connection.getConnection()
-      await connection.query(sql, values)
-      con.release()
-      res.status(200).send("Motorista cadastrado com sucesso")
+      try {
 
-    } catch (error: any) {
-      console.error(error)
-      if (error.errno == 1062) {
-        if (error.sqlMessage.includes('driver.email')) {
-          res.status(400).send("O e-mail fornecido já está em uso. Por favor, escolha outro.")
-        } else if (error.sqlMessage.includes('driver.phone_number')) {
-          res.status(400).send('O número de telefone fornecido já está em uso.')
-        } else if (error.sqlMessage.includes('driver.PRIMARY')) {
-          res.status(400).send('CPF já está Cadastrado')
-        } else {
-          res.status(400).send("Ocorreu um erro ao tentar salvar o motorista. Por favor, tente novamente.")
+        const con = await connection.getConnection()
+        await connection.query(sql, values)
+        con.release()
+        res.status(200).send("Motorista cadastrado com sucesso")
+
+      } catch (error: any) {
+        if (error.errno == 1062) {
+          if (error.sqlMessage.includes('driver.email')) {
+            res.status(400).send("O e-mail fornecido já está em uso. Por favor, escolha outro.")
+          } else if (error.sqlMessage.includes('driver.phone_number')) {
+            res.status(400).send('O número de telefone fornecido já está em uso.')
+          } else if (error.sqlMessage.includes('driver.PRIMARY')) {
+            res.status(400).send('CPF já está Cadastrado')
+          } else {
+            res.status(400).send("Ocorreu um erro ao tentar salvar o motorista. Por favor, tente novamente.")
+          }
         }
       }
-    }
-  })
+    })
 
 router.post('/login',
-  [check('email').notEmpty().withMessage('O campo de login não pode estar vazio!'),],
+  [check('email').notEmpty().withMessage('O campo de email não pode estar vazio!'),],
 
   async (req: Request, res: Response) => {
-    const erros = validationResult(req)
 
-    if (!erros.isEmpty()) {
-      return res.status(400).json({ errors: erros.array() })
-    }
+    handleRequestValidation(req, res)
 
     const driver: Driver = req.body
+
     const values = [
       driver.email,
       driver.senha,
     ]
 
-    const sql = `SELECT senha FROM driver where email = ?`
+    const driverDataToken: Driver = {
+      cpf: driver.cpf,
+      name: driver.name,
+      email: driver.email,
+      phone_number: driver.phone_number,
+      senha: '',
+      genero: ''
+    }
 
     try {
-      const con = await connection.getConnection()
-      const queryResult = await connection.query(sql, values)
-      const passwordArrayResult = queryResult[0] as { senha: string }[]
 
-      const SECRET = process.env.SECRET;
-      console.log(SECRET)
-    
-      if (!SECRET) {
-        throw new Error('Chave secreta não definida!');
-      } 
-      const token = jwt.sign({ name: driver.name }, SECRET, {
-        expiresIn: 2 * 60
-      })
+      const loginQueryResult = await login(driver, driverDataToken, values)
 
-      const correctPasswordVerified = await compare(driver.senha, passwordArrayResult[0].senha)
+      if (loginQueryResult.success == true) {
 
-      if (correctPasswordVerified) {
-        res.status(200).send(token)
-        con.release()
-
+        res.status(200).json({
+          token: loginQueryResult.token,
+          message: loginQueryResult.messageSuccess
+        })
       } else {
-        res.status(401).send("Login de usuário ou senha incorreto.")
-        con.release()
+        res.status(400).json({
+          token: loginQueryResult.token,
+          message: loginQueryResult.messageError
+        })
       }
+
     } catch (error) {
       res.status(400).send("Ops, algo deu errado. Verifique suas credenciais e tente novamente.")
     }
