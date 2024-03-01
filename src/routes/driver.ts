@@ -5,7 +5,7 @@ import { check, validationResult } from 'express-validator';
 import connection from '../config/connectionDb';
 import { Driver, trueActive } from '../models/driverModel';
 import { driverRepository } from '../repositories/driverRepository';
-import { handleRequestValidation } from '../utils/expressValidationUtils';
+import { expressValidationUtils } from '../utils/expressValidationUtils';
 import { getTotalExpense } from './expense';
 import { getTotalIncome } from './income';
 import { dateTimeMysqlUtils } from '../utils/dateTimeMySqlUtils';
@@ -14,6 +14,7 @@ dotenv.config()
 
 const router = express.Router()
 const { login } = driverRepository()
+const { handleRequestValidation,checkLoginValidation } = expressValidationUtils()
 
 const { getCurrentDateTimeMySQLFormat } = dateTimeMysqlUtils()
 const verify =
@@ -71,8 +72,7 @@ const verify =
       }
     })
 
-router.post('/login',
-  [check('email').notEmpty().withMessage('O campo de email não pode estar vazio!'),],
+router.post('/login', checkLoginValidation(),
 
   async (req: Request, res: Response) => {
 

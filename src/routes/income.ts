@@ -2,9 +2,11 @@ import express, { Request, Response } from 'express'
 import { check, validationResult } from 'express-validator'
 import connection from '../config/connectionDb'
 import { Income } from '../models/incomeModel'
-import { getCurrentDateTimeMySQLFormat } from './driver'
+import { dateTimeMysqlUtils } from '../utils/dateTimeMySqlUtils'
+
 
 const router = express.Router()
+const { getCurrentDateTimeMySQLFormat } = dateTimeMysqlUtils()
 
 router.post('/save',
     [
