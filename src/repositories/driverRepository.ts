@@ -44,53 +44,67 @@ export const driverRepository = () => {
 
         const passwordHash = await hash(driver.senha, 10)
         const sql = `INSERT INTO driver (cpf, name, email, senha, phone_number, active, genero, registration_datetime) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        const con = await connection.getConnection()
 
         try {
 
-            const con = await connection.getConnection()
-            const result = await con.query(sql, values)
-
-            if (result) {
-                return {
-                    success: true,
-                    message: "Motorista Cadastrado com Sucesso!"
-                }
-            }
-            con.release()
+            await con.query(sql, values)
 
         } catch (error: any) {
-
             throw error;
-        }
 
+        } finally {
+            con.release()
+        }
     }
 
     const showDrivers = async () => {
 
         const sql = ` SELECT * FROM driver `
+        const con = await connection.getConnection()
+
         try {
-            await connection.getConnection()
-            const [result] = await connection.execute(sql)
+            const [result] = await con.execute(sql)
 
             if (result) {
                 return {
                     success: true,
-                    message: "Motorista Cadastrado com Sucesso!"
+                    result
                 }
             }
-
-        } catch {
-
+        } catch (error: any) {
+            throw error
+        } finally {
+            con.release
         }
-
-
     }
 
+    const showDriverById = async (cpf) => {
+        const sql = `SELECT * FROM driver WHERE cpf = '${cpf}'`
+        const con = await connection.getConnection()
+        try {
 
+            const [result] = await con.execute(sql)
+            if (result) {
+                return {
+                    success: true,
+                    result
+                }
+            }
+            
+        
+        } catch (error: any) {
+            throw error
+        } finally {
+            con.release()
+        }
+    }
 
     return {
         login,
-        save
+        save,
+        showDrivers,
+        showDriverById
     }
 
 }

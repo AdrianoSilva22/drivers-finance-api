@@ -13,13 +13,13 @@ dotenv.config()
 
 
 const router = express.Router()
-const { login, save } = driverRepository()
+const { login, save, showDrivers, showDriverById } = driverRepository()
 const { handleRequestValidation, checkLoginValidation, checkSaveValidation } = expressValidationUtils()
 
 const { getCurrentDateTimeMySQLFormat } = dateTimeMysqlUtils()
 const verify =
 
-  router.post('/save',checkSaveValidation(),
+  router.post('/save', checkSaveValidation(),
 
     async (req: Request, res: Response) => {
 
@@ -40,7 +40,8 @@ const verify =
 
       try {
 
-        save(driver, values)
+        const saveQueryResult = await save(driver, values)
+        res.send("Motorista Cadastrado com Sucesso!").status(200)
 
       } catch (error: any) {
         if (error.errno == 1062) {
@@ -81,18 +82,18 @@ router.post('/login', checkLoginValidation(),
 
     try {
 
-      const loginQueryResult = await login(driver, driverDataToken, values)
+      const queryResultLoginDriver = await login(driver, driverDataToken, values)
 
-      if (loginQueryResult.success == true) {
+      if (queryResultLoginDriver.success == true) {
 
         res.status(200).json({
-          token: loginQueryResult.token,
-          message: loginQueryResult.messageSuccess
+          token: queryResultLoginDriver.token,
+          message: queryResultLoginDriver.messageSuccess
         })
       } else {
         res.status(400).json({
-          token: loginQueryResult.token,
-          message: loginQueryResult.messageError
+          token: queryResultLoginDriver.token,
+          message: queryResultLoginDriver.messageError
         })
       }
 
@@ -102,29 +103,31 @@ router.post('/login', checkLoginValidation(),
   })
 
 router.get('/getTotal', async (req: Request, res: Response) => {
-  const sql = ` SELECT * FROM driver `
 
   try {
-    await connection.getConnection()
-    const [result] = await connection.execute(sql)
-    res.json(result).status(200)
+
+    const queryResultShowDriver = await showDrivers()
+
+    if (queryResultShowDriver?.success == true) {
+      res.send(queryResultShowDriver.result).status(200)
+    }
   } catch (error) {
-    console.error('Erro ao buscar motoristas:', error)
     res.status(404).send('Erro ao buscar motoristas')
   }
 })
 
 router.get('/get/:cpf', async (req: Request, res: Response) => {
   const { cpf } = req.params
-  const sql = `SELECT * FROM driver WHERE cpf = ${cpf}`
 
   try {
-    await connection.getConnection()
-    const [result] = await connection.execute(sql)
-    if (Array.isArray(result) && result.length === 0) {
-      throw new Error()
-    } else {
-      res.send(result).status(200)
+    const queryResultShowDriverByCpf = await showDriverById(cpf)
+
+    if (queryResultShowDriverByCpf) {
+      if (Array.isArray(queryResultShowDriverByCpf.result) && queryResultShowDriverByCpf.result.length === 0) {
+        throw new Error()
+      } else {
+        res.send(queryResultShowDriverByCpf.result).status(200)
+      }
     }
   } catch (error) {
     res.status(404).send('Erro ao buscar motorista')
