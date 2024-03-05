@@ -1,4 +1,4 @@
-import { compare } from "bcrypt";
+import { compare, hash } from "bcrypt";
 import connection from "../config/connectionDb";
 import { Driver } from "../models/driverModel";
 import { tokenUtils } from '../utils/tokenUtils';
@@ -37,9 +37,58 @@ export const driverRepository = () => {
         }
     }
 
-    return {
-        login
+    const save = async (driver, values) => {
+
+
+        const passwordHash = await hash(driver.senha, 10)
+        const sql = `INSERT INTO driver (cpf, name, email, senha, phone_number, active, genero, registration_datetime) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+
+        try {
+
+            const con = await connection.getConnection()
+            const result = await con.query(sql, values)
+
+            if (result) {
+                return {
+                    success: true,
+                    message: "Motorista Cadastrado com Sucesso!"
+                }
+            }
+            con.release()
+
+        } catch (error: any) {
+
+            throw error;
+        }
+
     }
+
+    const showDrivers = async () => {
+
+        const sql = ` SELECT * FROM driver `
+        try {
+            await connection.getConnection()
+            const [result] = await connection.execute(sql)
+
+            if (result) {
+                return {
+                    success: true,
+                    message: "Motorista Cadastrado com Sucesso!"
+                }
+            }
+
+        } catch {
+
+        }
+
+
+    }
+
+
+
+    return {
+        login,
+        save
+    }
+
 }
-
-
