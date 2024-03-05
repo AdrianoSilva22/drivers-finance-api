@@ -5,16 +5,16 @@ import { check, validationResult } from 'express-validator';
 import connection from '../config/connectionDb';
 import { Driver, trueActive } from '../models/driverModel';
 import { driverRepository } from '../repositories/driverRepository';
+import { dateTimeMysqlUtils } from '../utils/dateTimeMySqlUtils';
 import { expressValidationUtils } from '../utils/expressValidationUtils';
 import { getTotalExpense } from './expense';
 import { getTotalIncome } from './income';
-import { dateTimeMysqlUtils } from '../utils/dateTimeMySqlUtils';
 dotenv.config()
 
 
 const router = express.Router()
 const { login } = driverRepository()
-const { handleRequestValidation,checkLoginValidation } = expressValidationUtils()
+const { handleRequestValidation, checkLoginValidation } = expressValidationUtils()
 
 const { getCurrentDateTimeMySQLFormat } = dateTimeMysqlUtils()
 const verify =
@@ -54,9 +54,8 @@ const verify =
 
         const con = await connection.getConnection()
         await connection.query(sql, values)
-        con.release()
         res.status(200).send("Motorista cadastrado com sucesso")
-
+        con.release()
       } catch (error: any) {
         if (error.errno == 1062) {
           if (error.sqlMessage.includes('driver.email')) {
@@ -72,11 +71,11 @@ const verify =
       }
     })
 
-router.post('/login', checkLoginValidation(),
+router.post('/login',
 
   async (req: Request, res: Response) => {
 
-    handleRequestValidation(req, res)
+    // await handleRequestValidation(req, res)
 
     const driver: Driver = req.body
 
@@ -105,27 +104,30 @@ router.post('/login', checkLoginValidation(),
           message: loginQueryResult.messageSuccess
         })
       } else {
-        res.status(400).json({
-          token: loginQueryResult.token,
+        res.status(401).json({
           message: loginQueryResult.messageError
         })
       }
 
     } catch (error) {
+      console.log(error)
       res.status(400).send("Ops, algo deu errado. Verifique suas credenciais e tente novamente.")
     }
   })
 
 router.get('/getTotal', async (req: Request, res: Response) => {
   const sql = ` SELECT * FROM driver `
+  const con = await connection.getConnection()
 
   try {
-    await connection.getConnection()
-    const [result] = await connection.execute(sql)
+    const [result] = await con.execute(sql)
     res.json(result).status(200)
+    con.release()
   } catch (error) {
     console.error('Erro ao buscar motoristas:', error)
     res.status(404).send('Erro ao buscar motoristas')
+  } finally {
+    con.release()
   }
 })
 
@@ -134,13 +136,15 @@ router.get('/get/:cpf', async (req: Request, res: Response) => {
   const sql = `SELECT * FROM driver WHERE cpf = ${cpf}`
 
   try {
-    await connection.getConnection()
+    const con = await connection.getConnection()
     const [result] = await connection.execute(sql)
     if (Array.isArray(result) && result.length === 0) {
       throw new Error()
     } else {
       res.send(result).status(200)
     }
+    con.release()
+
   } catch (error) {
     res.status(404).send('Erro ao buscar motorista')
     return null
@@ -163,9 +167,9 @@ router.put('/update/:cpf', async (req: Request, res: Response) => {
   ]
   try {
     const con = await connection.getConnection()
-    const [result] = await connection.query(sql, valores)
-    con.release()
+    const [result] = await con.query(sql, valores)
     res.status(200).send('Motorista atualizado com sucesso')
+    con.release()
   } catch (error) {
     console.error('Erro ao atualizar o motorista:', error)
     res.status(400).send('Erro ao atualizar o motorista')
@@ -175,11 +179,15 @@ router.put('/update/:cpf', async (req: Request, res: Response) => {
 router.delete('/delete/:cpf', async (req: Request, res: Response) => {
   const { cpf } = req.params
   const sql = `DELETE FROM driver WHERE cpf = ${cpf}`
+  const con = await connection.getConnection()
   try {
-    const [result] = await connection.execute(sql)
+    await con.execute(sql)
     res.status(204).send('Motorista deletado com sucesso!')
+    con.release()
   } catch (error) {
     res.status(400).send('Erro ao deletar motorista!')
+  } finally {
+    con.release()
   }
 })
 
