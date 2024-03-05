@@ -13,7 +13,7 @@ dotenv.config()
 
 
 const router = express.Router()
-const { login, save, showDrivers, showDriverById } = driverRepository()
+const { loginDriver, saveDriver, showDrivers, showDriverById, updateDriver } = driverRepository()
 const { handleRequestValidation, checkLoginValidation, checkSaveValidation } = expressValidationUtils()
 
 const { getCurrentDateTimeMySQLFormat } = dateTimeMysqlUtils()
@@ -40,7 +40,7 @@ const verify =
 
       try {
 
-        const saveQueryResult = await save(driver, values)
+        const saveQueryResult = await saveDriver(driver, values)
         res.send("Motorista Cadastrado com Sucesso!").status(200)
 
       } catch (error: any) {
@@ -82,7 +82,7 @@ router.post('/login', checkLoginValidation(),
 
     try {
 
-      const queryResultLoginDriver = await login(driver, driverDataToken, values)
+      const queryResultLoginDriver = await loginDriver(driver, driverDataToken, values)
 
       if (queryResultLoginDriver.success == true) {
 
@@ -141,7 +141,7 @@ router.put('/update/:cpf', async (req: Request, res: Response) => {
 
   const sql = `UPDATE driver SET name = ? , email = ? , senha = ?, phone_number = ?, active = ?, genero = ? WHERE cpf = ${cpf}`
 
-  const valores = [
+  const values = [
     driver.name,
     driver.email,
     driver.senha,
@@ -150,12 +150,17 @@ router.put('/update/:cpf', async (req: Request, res: Response) => {
     driver.genero,
   ]
   try {
-    const con = await connection.getConnection()
-    const [result] = await connection.query(sql, valores)
-    con.release()
-    res.status(200).send('Motorista atualizado com sucesso')
+
+    const queryResultUpdateDriver = await updateDriver(driver, values, cpf)
+
+    if (queryResultUpdateDriver) {
+      if (Array.isArray(queryResultUpdateDriver.result) && queryResultUpdateDriver.result.length === 0) {
+        throw new Error()
+      } else {
+        res.status(200).send('Motorista atualizado com sucesso')
+      }
+    }
   } catch (error) {
-    console.error('Erro ao atualizar o motorista:', error)
     res.status(400).send('Erro ao atualizar o motorista')
   }
 })

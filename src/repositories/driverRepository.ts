@@ -8,7 +8,7 @@ const { generateToken } = tokenUtils()
 
 export const driverRepository = () => {
 
-    const login = async (driver: Driver, driverDataToken: Driver, values: string[],) => {
+    const loginDriver = async (driver: Driver, driverDataToken: Driver, values: string[],) => {
         const sql = `SELECT senha FROM driver where email = ?`
         try {
 
@@ -39,7 +39,7 @@ export const driverRepository = () => {
 
     }
 
-    const save = async (driver, values) => {
+    const saveDriver = async (driver: Driver, values) => {
 
 
         const passwordHash = await hash(driver.senha, 10)
@@ -79,11 +79,10 @@ export const driverRepository = () => {
         }
     }
 
-    const showDriverById = async (cpf) => {
+    const showDriverById = async (cpf: string) => {
         const sql = `SELECT * FROM driver WHERE cpf = '${cpf}'`
         const con = await connection.getConnection()
         try {
-
             const [result] = await con.execute(sql)
             if (result) {
                 return {
@@ -91,8 +90,24 @@ export const driverRepository = () => {
                     result
                 }
             }
+        } catch (error: any) {
+            throw error
+        } finally {
+            con.release()
+        }
+    }
+
+    const updateDriver = async (driver: Driver, values: any, cpf: string) => {
+        const sql = `UPDATE driver SET name = ? , email = ? , senha = ?, phone_number = ?, active = ?, genero = ? WHERE cpf = ${cpf}`
+        const con = await connection.getConnection()
+
+        try {
+
+            const [result] = await con.query(sql, values)
             
-        
+
+            
+
         } catch (error: any) {
             throw error
         } finally {
@@ -101,8 +116,8 @@ export const driverRepository = () => {
     }
 
     return {
-        login,
-        save,
+        loginDriver,
+        saveDriver,
         showDrivers,
         showDriverById
     }
