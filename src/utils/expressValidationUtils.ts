@@ -18,7 +18,8 @@ export const expressValidationUtils = () => {
     }
 
     return {
-        handleRequestValidation
+        handleRequestValidation,
+        checkLoginValidation
     }
 
 }
