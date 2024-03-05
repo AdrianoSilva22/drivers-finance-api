@@ -13,31 +13,19 @@ dotenv.config()
 
 
 const router = express.Router()
-const { login } = driverRepository()
-const { handleRequestValidation,checkLoginValidation } = expressValidationUtils()
+const { login, save } = driverRepository()
+const { handleRequestValidation, checkLoginValidation, checkSaveValidation } = expressValidationUtils()
 
 const { getCurrentDateTimeMySQLFormat } = dateTimeMysqlUtils()
 const verify =
 
-  router.post('/save',
-    [
-      check('email').notEmpty().withMessage('O campo de e-mail não pode estar vazio!').isEmail().withMessage('Informe um e-mail válido'),
-      check('name').notEmpty().withMessage('O campo nome não pode estar vazio!'),
-      check('senha').isLength({ min: 8 }).withMessage('O campo senha deve ter no mínimo 8 caracteres!'),
-      check('genero').notEmpty().withMessage('O campo gênero não pode estar vazio!')
-    ],
+  router.post('/save',checkSaveValidation(),
 
     async (req: Request, res: Response) => {
-      const erros = validationResult(req)
 
-      if (!erros.isEmpty()) {
-        return res.status(400).json({ errors: erros.array() })
-      }
+      handleRequestValidation(req, res)
 
       const driver: Driver = req.body
-
-      const passwordHash = await hash(driver.senha, 10)
-      const sql = `INSERT INTO driver (cpf, name, email, senha, phone_number, active, genero, registration_datetime) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 
       const values = [
         driver.cpf,
@@ -52,10 +40,7 @@ const verify =
 
       try {
 
-        const con = await connection.getConnection()
-        await connection.query(sql, values)
-        con.release()
-        res.status(200).send("Motorista cadastrado com sucesso")
+        save(driver, values)
 
       } catch (error: any) {
         if (error.errno == 1062) {
@@ -112,7 +97,7 @@ router.post('/login', checkLoginValidation(),
       }
 
     } catch (error) {
-      res.status(400).send("Ops, algo deu errado. Verifique suas credenciais e tente novamente.")
+      res.status(400).send("Ops, algo deu errado. Tente novamente ou contate o admim.")
     }
   })
 
