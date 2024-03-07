@@ -2,7 +2,12 @@ import { compare, hash } from "bcrypt";
 import connection from "../config/connectionDb";
 import { Driver } from "../models/driverModel";
 import { tokenUtils } from '../utils/tokenUtils';
+import { expenseRepository } from "./expenseRepository";
+import { incomeRepository } from "./incomeRepository";
 const { generateToken } = tokenUtils()
+const { getTotalExpense } = expenseRepository()
+const { getTotalIncome } = incomeRepository()
+
 
 
 
@@ -104,10 +109,14 @@ export const driverRepository = () => {
         try {
 
             const [result] = await con.query(sql, values)
-            
 
-            
-
+            if (Array.isArray(result) && result.length === 0) {
+                throw new Error()
+            } else {
+                return {
+                    result
+                }
+            }
         } catch (error: any) {
             throw error
         } finally {
@@ -115,11 +124,58 @@ export const driverRepository = () => {
         }
     }
 
+    const deleteDriver = async (cpf: string) => {
+
+        const sql = `DELETE FROM driver WHERE cpf = '${cpf}'`
+        const con = await connection.getConnection()
+
+        try {
+
+            const [result] = await con.execute(sql)
+
+            if (Array.isArray(result) && result.length === 0) {
+                return null
+            } else {
+                throw new Error()
+            }
+        } catch (error: any) {
+            throw error
+        } finally {
+            con.release()
+        }
+
+    }
+
+    const showTotalDriverBalance = async (cpf: string) => {
+        const sql = `SELECT * FROM driver WHERE cpf = '${cpf}'`
+        const con = await connection.getConnection()
+
+        try {
+            const totalIncome = await getTotalIncome(cpf)
+            const totalExpense = await getTotalExpense(cpf)
+
+            if (totalIncome != undefined && totalExpense != undefined) {
+                const totalBalance = totalIncome - totalExpense
+                return {
+                    totalBalance
+                }
+            }
+        } catch (error: any) {
+            throw error
+        } finally {
+            con.release()
+        }
+    }
+
+
     return {
         loginDriver,
         saveDriver,
         showDrivers,
-        showDriverById
+        showDriverById,
+        updateDriver,
+        deleteDriver,
+        showTotalDriverBalance
     }
 
 }
