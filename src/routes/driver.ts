@@ -6,14 +6,12 @@ import connection from '../config/connectionDb';
 import { Driver, trueActive } from '../models/driverModel';
 import { driverRepository } from '../repositories/driverRepository';
 import { expressValidationUtils } from '../utils/expressValidationUtils';
-import { getTotalExpense } from './expense';
-import { getTotalIncome } from './income';
 import { dateTimeMysqlUtils } from '../utils/dateTimeMySqlUtils';
 dotenv.config()
 
 
 const router = express.Router()
-const { loginDriver, saveDriver, showDrivers, showDriverById, updateDriver } = driverRepository()
+const { loginDriver, saveDriver, showDrivers, showDriverById, showTotalDriverBalance, updateDriver, deleteDriver } = driverRepository()
 const { handleRequestValidation, checkLoginValidation, checkSaveValidation } = expressValidationUtils()
 
 const { getCurrentDateTimeMySQLFormat } = dateTimeMysqlUtils()
@@ -139,8 +137,6 @@ router.put('/update/:cpf', async (req: Request, res: Response) => {
   const { cpf } = req.params
   const driver: Driver = req.body
 
-  const sql = `UPDATE driver SET name = ? , email = ? , senha = ?, phone_number = ?, active = ?, genero = ? WHERE cpf = ${cpf}`
-
   const values = [
     driver.name,
     driver.email,
@@ -154,11 +150,7 @@ router.put('/update/:cpf', async (req: Request, res: Response) => {
     const queryResultUpdateDriver = await updateDriver(driver, values, cpf)
 
     if (queryResultUpdateDriver) {
-      if (Array.isArray(queryResultUpdateDriver.result) && queryResultUpdateDriver.result.length === 0) {
-        throw new Error()
-      } else {
-        res.status(200).send('Motorista atualizado com sucesso')
-      }
+      res.status(200).json({ result: queryResultUpdateDriver.result }).send('Motorista atualizado com sucesso')
     }
   } catch (error) {
     res.status(400).send('Erro ao atualizar o motorista')
@@ -167,10 +159,13 @@ router.put('/update/:cpf', async (req: Request, res: Response) => {
 
 router.delete('/delete/:cpf', async (req: Request, res: Response) => {
   const { cpf } = req.params
-  const sql = `DELETE FROM driver WHERE cpf = ${cpf}`
+
   try {
-    const [result] = await connection.execute(sql)
-    res.status(204).send('Motorista deletado com sucesso!')
+    const queryResultUpdateDriver = await deleteDriver(cpf)
+
+    if (queryResultUpdateDriver) {
+      res.status(204).send('Motorista deletado com sucesso!')
+    }
   } catch (error) {
     res.status(400).send('Erro ao deletar motorista!')
   }
@@ -179,13 +174,10 @@ router.delete('/delete/:cpf', async (req: Request, res: Response) => {
 router.get('/getTotalBalance/:cpf', async (req: Request, res: Response) => {
   const { cpf } = req.params
   try {
-    const totalIncome = await getTotalIncome(cpf)
-    const totalExpense = await getTotalExpense(cpf)
+    const queryResultBalanceDriver = await showTotalDriverBalance(cpf)
 
-    if (totalIncome != undefined && totalExpense != undefined) {
-      const totalBalance = totalIncome - totalExpense
-
-      res.status(200).send(`${totalBalance}`)
+    if (queryResultBalanceDriver) {
+      res.status(200).send(`O saldo do Driver é: ${queryResultBalanceDriver.totalBalance}`)
     }
   } catch (error) {
     res.status(404).send('Erro ao buscar o Saldo do Motorista')
