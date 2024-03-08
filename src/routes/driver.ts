@@ -5,8 +5,6 @@ import { driverRepository } from '../repositories/driverRepository';
 import { dateTimeMysqlUtils } from '../utils/dateTimeMySqlUtils';
 import { expressValidationUtils } from '../utils/expressValidationUtils';
 import { passwordHash } from "../utils/passwordHashUtilis";
-const { password } = passwordHash()
-
 dotenv.config()
 
 
@@ -29,7 +27,7 @@ const verify =
         driver.cpf,
         driver.name,
         driver.email,
-        await password(driver.senha),
+        await passwordHash(driver.senha),
         driver.phone_number,
         true,
         driver.genero,
