@@ -17,7 +17,7 @@ const { handleRequestValidation, checkLoginValidation, checkSaveValidation } = e
 const { getCurrentDateTimeMySQLFormat } = dateTimeMysqlUtils()
 const verify =
 
-  router.post('/save',checkSaveValidation(),
+  router.post('/save', checkSaveValidation(),
 
     async (req: Request, res: Response) => {
 
@@ -29,7 +29,7 @@ const verify =
         driver.cpf,
         driver.name,
         driver.email,
-        passwordHash,
+        driver.senha,
         driver.phone_number,
         trueActive(true),
         driver.genero,
@@ -37,9 +37,7 @@ const verify =
       ]
 
       try {
-
         save(driver, values)
-
       } catch (error: any) {
         if (error.errno == 1062) {
           if (error.sqlMessage.includes('driver.email')) {
@@ -116,7 +114,7 @@ router.get('/getTotal', async (req: Request, res: Response) => {
 
 router.get('/get/:cpf', async (req: Request, res: Response) => {
   const { cpf } = req.params
-  const sql = `SELECT * FROM driver WHERE cpf = ${cpf}`
+  const sql = `SELECT * FROM driver WHERE cpf = '${cpf}' `
 
   try {
     const con = await connection.getConnection()
@@ -138,7 +136,7 @@ router.put('/update/:cpf', async (req: Request, res: Response) => {
   const { cpf } = req.params
   const driver: Driver = req.body
 
-  const sql = `UPDATE driver SET name = ? , email = ? , senha = ?, phone_number = ?, active = ?, genero = ? WHERE cpf = ${cpf}`
+  const sql = `UPDATE driver SET name = ? , email = ? , senha = ?, phone_number = ?, active = ?, genero = ? WHERE cpf = '${cpf}'`
 
   const valores = [
     driver.name,
@@ -161,13 +159,13 @@ router.put('/update/:cpf', async (req: Request, res: Response) => {
 
 router.delete('/delete/:cpf', async (req: Request, res: Response) => {
   const { cpf } = req.params
-  const sql = `DELETE FROM driver WHERE cpf = ${cpf}`
+  const sql = `DELETE FROM driver WHERE cpf = '${cpf}'`
   const con = await connection.getConnection()
   try {
     await con.execute(sql)
     res.status(204).send('Motorista deletado com sucesso!')
-    con.release()
   } catch (error) {
+    console.error(error)
     res.status(400).send('Erro ao deletar motorista!')
   } finally {
     con.release()

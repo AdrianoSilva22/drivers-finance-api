@@ -1,4 +1,4 @@
-import { compare, hash } from "bcrypt";
+import { compare } from "bcrypt";
 import connection from "../config/connectionDb";
 import { Driver } from "../models/driverModel";
 import { tokenUtils } from '../utils/tokenUtils';
@@ -8,7 +8,7 @@ const { generateToken } = tokenUtils()
 
 export const driverRepository = () => {
 
-    const login = async (driver: Driver, driverDataToken: Driver, values: string[],) => {
+    const login = async (driver: Driver, driverDataToken: Driver, values: string[]) => {
         const sql = `SELECT senha FROM driver where email = ?`
         const con = await connection.getConnection()
 
@@ -37,15 +37,12 @@ export const driverRepository = () => {
         }
     }
 
-    const save = async (driver, values) => {
+    const save = async (driver: Driver, values: any[]) => {
 
-
-        const passwordHash = await hash(driver.senha, 10)
         const sql = `INSERT INTO driver (cpf, name, email, senha, phone_number, active, genero, registration_datetime) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        const con = await connection.getConnection()
 
         try {
-
-            const con = await connection.getConnection()
             const result = await con.query(sql, values)
 
             if (result) {
@@ -54,11 +51,10 @@ export const driverRepository = () => {
                     message: "Motorista Cadastrado com Sucesso!"
                 }
             }
-            con.release()
-
         } catch (error: any) {
-
             throw error;
+        } finally {
+            con.release()
         }
 
     }
@@ -66,8 +62,9 @@ export const driverRepository = () => {
     const showDrivers = async () => {
 
         const sql = ` SELECT * FROM driver `
+        const con = await connection.getConnection()
+
         try {
-            await connection.getConnection()
             const [result] = await connection.execute(sql)
 
             if (result) {
@@ -88,7 +85,8 @@ export const driverRepository = () => {
 
     return {
         login,
-        save
+        save,
+        showDrivers
     }
 
 }
