@@ -6,7 +6,3 @@ export interface Driver {
     genero: string
     phone_number: string
   }
-
-  export const trueActive = (active: boolean) => {
-    return active = true
-  }

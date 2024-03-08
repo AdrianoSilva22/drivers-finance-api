@@ -2,13 +2,18 @@ import { compare } from "bcrypt";
 import connection from "../config/connectionDb";
 import { Driver } from "../models/driverModel";
 import { tokenUtils } from '../utils/tokenUtils';
+import { expenseRepository } from "./expenseRepository";
+import { incomeRepository } from "./incomeRepository";
 const { generateToken } = tokenUtils()
+const { getTotalExpense } = expenseRepository()
+const { getTotalIncome } = incomeRepository()
+
 
 
 
 export const driverRepository = () => {
 
-    const login = async (driver: Driver, driverDataToken: Driver, values: string[]) => {
+    const loginDriver = async (driver: Driver, driverDataToken: Driver, values: string[],) => {
         const sql = `SELECT senha FROM driver where email = ?`
         const con = await connection.getConnection()
 
@@ -37,26 +42,19 @@ export const driverRepository = () => {
         }
     }
 
-    const save = async (driver: Driver, values: any[]) => {
+    const saveDriver = async (driver: Driver, values: any) => {
 
         const sql = `INSERT INTO driver (cpf, name, email, senha, phone_number, active, genero, registration_datetime) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
         const con = await connection.getConnection()
 
         try {
-            const result = await con.query(sql, values)
-
-            if (result) {
-                return {
-                    success: true,
-                    message: "Motorista Cadastrado com Sucesso!"
-                }
-            }
+            await con.query(sql, values)
         } catch (error: any) {
             throw error;
+
         } finally {
             con.release()
         }
-
     }
 
     const showDrivers = async () => {
@@ -65,28 +63,104 @@ export const driverRepository = () => {
         const con = await connection.getConnection()
 
         try {
-            const [result] = await connection.execute(sql)
+            const [result] = await con.execute(sql)
 
             if (result) {
                 return {
                     success: true,
-                    message: "Motorista Cadastrado com Sucesso!"
+                    result
                 }
             }
-
-        } catch {
-
+        } catch (error: any) {
+            throw error
+        } finally {
+            con.release
         }
-
-
     }
 
+    const showDriverById = async (cpf: string) => {
+        const sql = `SELECT * FROM driver WHERE cpf = '${cpf}'`
+        const con = await connection.getConnection()
+        try {
+            const [result] = await con.execute(sql)
+            if (result) {
+                return {
+                    success: true,
+                    result
+                }
+            }
+        } catch (error: any) {
+            throw error
+        } finally {
+            con.release()
+        }
+    }
 
+    const updateDriver = async (driver: Driver, values: any, cpf: string) => {
+        const sql = `UPDATE driver SET name = ? , email = ? , senha = ?, phone_number = ?, active = ?, genero = ? WHERE cpf = ${cpf}`
+        const con = await connection.getConnection()
+
+        try {
+
+            const [result] = await con.query(sql, values)
+
+            if (Array.isArray(result) && result.length === 0) {
+                throw new Error()
+            } else {
+                return {
+                    result
+                }
+            }
+        } catch (error: any) {
+            throw error
+        } finally {
+            con.release()
+        }
+    }
+
+    const deleteDriver = async (cpf: string) => {
+
+        const sql = `DELETE FROM driver WHERE cpf = '${cpf}'`
+        const con = await connection.getConnection()
+
+        try {
+            return await con.execute(sql)
+        } catch (error: any) {
+            throw error
+        } finally {
+            con.release()
+        }
+    }
+
+    const showTotalDriverBalance = async (cpf: string) => {
+        const sql = `SELECT * FROM driver WHERE cpf = '${cpf}'`
+        const con = await connection.getConnection()
+
+        try {
+            const totalIncome = await getTotalIncome(cpf)
+            const totalExpense = await getTotalExpense(cpf)
+
+            if (totalIncome != undefined && totalExpense != undefined) {
+                const totalBalance = totalIncome - totalExpense
+                return {
+                    totalBalance
+                }
+            }
+        } catch (error: any) {
+            throw error
+        } finally {
+            con.release()
+        }
+    }
 
     return {
-        login,
-        save,
-        showDrivers
+        loginDriver,
+        saveDriver,
+        showDrivers,
+        showDriverById,
+        updateDriver,
+        deleteDriver,
+        showTotalDriverBalance
     }
 
 }

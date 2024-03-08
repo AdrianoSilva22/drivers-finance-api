@@ -4,8 +4,11 @@ import { check, validationResult } from 'express-validator'
 import connection from '../config/connectionDb'
 import { Expense } from '../models/expenseModel'
 import { dateTimeMysqlUtils } from '../utils/dateTimeMySqlUtils' 
+import { expenseRepository } from '../repositories/expenseRepository'
 const router = express.Router()
 const { getCurrentDateTimeMySQLFormat } = dateTimeMysqlUtils()
+const { getTotalExpense } = expenseRepository()
+
 
 router.post('/save',
     [
@@ -44,24 +47,7 @@ router.post('/save',
         }
     })
 
-export const getTotalExpense = async (cpf: string) => {
-    const sql = `SELECT expense_amount FROM expense where driver_cpf = '${cpf}' `
 
-    try {
-        await connection.getConnection()
-        const [result] = await connection.execute(sql)
-
-        const queryResultExpense = result as { expense_amount: number }[]
-
-        const totalExpense = queryResultExpense.reduce((accumulator, currentItem) => {
-            return accumulator + Number(currentItem.expense_amount)
-        }, 0)
-
-        return totalExpense
-    } catch (error) {
-        console.error(error)
-    }
-}
 
 router.get('/getTotalExpenseAmount/:cpf', async (req: Request, res: Response) => {
     const { cpf } = req.params
