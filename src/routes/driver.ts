@@ -7,13 +7,11 @@ import { expressValidationUtils } from '../utils/expressValidationUtils';
 import { passwordHash } from "../utils/passwordHashUtilis";
 dotenv.config()
 
-
 const router = express.Router()
 const { loginDriver, saveDriver, showDrivers, showDriverById, showTotalDriverBalance, updateDriver, deleteDriver } = driverRepository()
 const { handleRequestValidation, checkLoginValidation, checkSaveValidation } = expressValidationUtils()
 
 const { getCurrentDateTimeMySQLFormat } = dateTimeMysqlUtils()
-const verify =
 
   router.post('/save', checkSaveValidation(),
 

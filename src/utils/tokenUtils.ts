@@ -1,8 +1,10 @@
+import * as dotenv from "dotenv";
+import { Request, Response } from 'express';
 import jwt from "jsonwebtoken";
 import { Driver } from "../models/driverModel";
+dotenv.config()
 
 export const tokenUtils = () => {
-
 
     const generateToken = (driverDataToken: Driver) => {
 
@@ -16,6 +18,15 @@ export const tokenUtils = () => {
         })
 
         return token
+    }
+
+    const verifyToken = (req: Request, res: Response) => {
+        const token = req.headers['authorization'] as string
+        if (!token) { res.status(401).send("Nenhum token fornecido.") }
+
+        jwt.verify(token, process.env.SECRET as string, (err, decoded) => {
+            if (err) { res.status(500).send() }
+        })
     }
 
     return {
