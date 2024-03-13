@@ -5,52 +5,54 @@ import { driverRepository } from '../repositories/driverRepository';
 import { dateTimeMysqlUtils } from '../utils/dateTimeMySqlUtils';
 import { expressValidationUtils } from '../utils/expressValidationUtils';
 import { passwordHash } from "../utils/passwordHashUtilis";
+import { tokenUtils } from "../utils/tokenUtils";
 dotenv.config()
 
 const router = express.Router()
+const { verifyToken } = tokenUtils()
 const { loginDriver, saveDriver, showDrivers, showDriverById, showTotalDriverBalance, updateDriver, deleteDriver } = driverRepository()
 const { handleRequestValidation, checkLoginValidation, checkSaveValidation } = expressValidationUtils()
 
 const { getCurrentDateTimeMySQLFormat } = dateTimeMysqlUtils()
 
-  router.post('/save', checkSaveValidation(),
+router.post('/save', checkSaveValidation(),
 
-    async (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
 
-      handleRequestValidation(req, res)
+    handleRequestValidation(req, res)
 
-      const driver: Driver = req.body
+    const driver: Driver = req.body
 
-      const values = [
-        driver.cpf,
-        driver.name,
-        driver.email,
-        await passwordHash(driver.senha),
-        driver.phone_number,
-        true,
-        driver.genero,
-        getCurrentDateTimeMySQLFormat(),
-      ]
+    const values = [
+      driver.cpf,
+      driver.name,
+      driver.email,
+      await passwordHash(driver.senha),
+      driver.phone_number,
+      true,
+      driver.genero,
+      getCurrentDateTimeMySQLFormat(),
+    ]
 
-      try {
-        const saveQueryResult = await saveDriver(driver, values)
-        res.send("Motorista Cadastrado com Sucesso!").status(200)
-      } catch (error: any) {
-        if (error.errno == 1062) {
-          if (error.sqlMessage.includes('driver.email')) {
-            res.status(400).send("O e-mail fornecido já está em uso. Por favor, escolha outro.")
-          } else if (error.sqlMessage.includes('driver.phone_number')) {
-            res.status(400).send('O número de telefone fornecido já está em uso.')
-          } else if (error.sqlMessage.includes('driver.PRIMARY')) {
-            res.status(400).send('CPF já está Cadastrado')
-          } else {
-            res.status(400).send("Ocorreu um erro ao tentar salvar o motorista. Por favor, tente novamente.")
-          }
+    try {
+      const saveQueryResult = await saveDriver(driver, values)
+      res.send("Motorista Cadastrado com Sucesso!").status(200)
+    } catch (error: any) {
+      if (error.errno == 1062) {
+        if (error.sqlMessage.includes('driver.email')) {
+          res.status(400).send("O e-mail fornecido já está em uso. Por favor, escolha outro.")
+        } else if (error.sqlMessage.includes('driver.phone_number')) {
+          res.status(400).send('O número de telefone fornecido já está em uso.')
+        } else if (error.sqlMessage.includes('driver.PRIMARY')) {
+          res.status(400).send('CPF já está Cadastrado')
+        } else {
+          res.status(400).send("Ocorreu um erro ao tentar salvar o motorista. Por favor, tente novamente.")
         }
       }
-    })
+    }
+  })
 
-router.post('/login',
+router.post('/login', checkLoginValidation(),
 
   async (req: Request, res: Response) => {
 
@@ -127,7 +129,7 @@ router.get('/get/:cpf', async (req: Request, res: Response) => {
   }
 })
 
-router.put('/update/:cpf', async (req: Request, res: Response) => {
+router.put('/update/:cpf', verifyToken, async (req: Request, res: Response) => {
   const { cpf } = req.params
   const driver: Driver = req.body
 
@@ -165,7 +167,7 @@ router.delete('/delete/:cpf', async (req: Request, res: Response) => {
   }
 })
 
-router.get('/getTotalBalance/:cpf', async (req: Request, res: Response) => {
+router.get('/getTotalBalance/:cpf', verifyToken ,async (req: Request, res: Response) => {
   const { cpf } = req.params
   try {
     const queryResultBalanceDriver = await showTotalDriverBalance(cpf)
