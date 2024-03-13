@@ -13,8 +13,10 @@ export const expressValidationUtils = () => {
 
     const checkLoginValidation = () => {
 
-        return [check('email').notEmpty().withMessage('O campo de email não pode estar vazio!'),
-        check('senha').notEmpty().withMessage('O campo de senha não pode estar vazio!')]
+        return [
+            check('email').notEmpty().withMessage('O campo de email não pode estar vazio!'),
+            check('senha').notEmpty().withMessage('O campo de senha não pode estar vazio!')
+        ]
     }
 
     const checkSaveValidation = () => {
