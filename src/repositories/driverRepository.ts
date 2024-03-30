@@ -16,25 +16,43 @@ export const driverRepository = () => {
     const loginDriver = async (driver: Driver, driverDataToken: Driver, values: string[],) => {
         const sql = `SELECT senha FROM driver where email = ?`
         const con = await connection.getConnection()
+        let messageResult: {
+            success: boolean;
+            messageSuccess?: string;
+            token?: string;
+            messageError?: string;
+        }
 
         try {
-            const queryResult = await con.query(sql, values)
-            const passwordQueryResult = queryResult[0] as { senha: string }[]
-            const token = generateToken(driver)
-            const passwordVerified = await compare(driver.senha, passwordQueryResult[0].senha)
+            const queryResult = await con.query(sql, values) as [][]
+            let passwordVerified = false
+            let password = ""
+            
+            if (queryResult[0].length > 0) {
+                 const passwordQueryResult = queryResult[0] as { senha: string }[]
+                 password = passwordQueryResult[0].senha
+            } 
+
+            const token = generateToken(driverDataToken)
+
+            if (password) {
+                passwordVerified = await compare(driver.senha, password)
+            }
 
             if (passwordVerified) {
-                return {
+                messageResult = {
                     success: true,
                     messageSuccess: "Login realizado com Sucesso!",
                     token
                 }
             } else {
-                return {
+                messageResult = {
                     success: false,
                     messageError: "Login de usuário ou senha incorreto."
                 }
             }
+
+            return messageResult
         } catch (error) {
             throw error;
         } finally {
