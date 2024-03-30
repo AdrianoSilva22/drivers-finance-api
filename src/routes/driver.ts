@@ -70,27 +70,23 @@ router.post('/login', checkLoginValidation(),
       name: driver.name,
       email: driver.email,
       phone_number: driver.phone_number,
+      genero: '',
       senha: '',
-      genero: ''
     }
 
     try {
-
       const queryResultLoginDriver = await loginDriver(driver, driverDataToken, values)
 
       if (queryResultLoginDriver.success == true) {
-
         res.status(200).json({
           token: queryResultLoginDriver.token,
           message: queryResultLoginDriver.messageSuccess
         })
       } else {
         res.status(400).json({
-          token: queryResultLoginDriver.token,
           message: queryResultLoginDriver.messageError
         })
       }
-
     } catch (error) {
       res.status(400).send("Ops, algo deu errado. Tente novamente ou contate o admim.")
     }
@@ -99,7 +95,6 @@ router.post('/login', checkLoginValidation(),
 router.get('/getTotal', async (req: Request, res: Response) => {
 
   try {
-
     const queryResultShowDriver = await showDrivers()
 
     if (queryResultShowDriver?.success == true) {
@@ -167,7 +162,7 @@ router.delete('/delete/:cpf', async (req: Request, res: Response) => {
   }
 })
 
-router.get('/getTotalBalance/:cpf', verifyToken ,async (req: Request, res: Response) => {
+router.get('/getTotalBalance/:cpf', verifyToken, async (req: Request, res: Response) => {
   const { cpf } = req.params
   try {
     const queryResultBalanceDriver = await showTotalDriverBalance(cpf)
