@@ -1,15 +1,10 @@
 import * as dotenv from "dotenv";
-import { Request, Response, NextFunction } from 'express';
-import jwt, { JwtPayload } from "jsonwebtoken";
+import { Request, Response } from 'express';
+import jwt from "jsonwebtoken";
 import { Driver } from "../models/driverModel";
 dotenv.config()
 
 export const tokenUtils = () => {
-    let decoded: JwtPayload | string
-
-    interface CustomRequest extends Request {
-        userCpf?: string;
-    }
 
     const generateToken = (driverDataToken: Driver) => {
 
@@ -19,31 +14,36 @@ export const tokenUtils = () => {
         }
 
         const token = jwt.sign(driverDataToken, SECRET, {
-            expiresIn: 2 * 60
+            expiresIn: 20
         })
 
         return token
     }
 
-    const verifyToken = (req: CustomRequest, res: Response, next: NextFunction) => {
-        const token = req.headers['authorization'] as string
+    const verifyToken = (req: Request, res: Response /* , next: NextFunction*/) => {
+        const token = req.headers.authorization as string
         if (!token) { res.status(401).send("Nenhum token fornecido.") }
         try {
-
-            decoded = jwt.verify(token, process.env.SECRET as string)
-
+            const tokenWithoutBearer = token.slice(7, token.length) //slice rejeita (nesse caso '7') os 7 primeiros caracteres
+            jwt.verify(tokenWithoutBearer, process.env.SECRET as string, (err, decoded) => {
+                if (err) {
+                    res.status(401).send({ message: "Invalid Token" });
+                } else {
+                    res.status(200).send("certo ")
+                }
+            })
         } catch (err) {
+            console.log(err)
             res.status(500).send("Falha ao autenticar o token")
         }
 
-        if (typeof decoded !== 'string' && decoded.cpf) {
-            const decodedCPF = decoded.cpf;
-            next()
-        }
+        // if (typeof decoded !== 'string' && decoded.cpf) {
+        //     const decodedCPF = decoded.cpf;
+        //     next()
+        // }
     }
 
     return {
-
         generateToken,
         verifyToken
     }
