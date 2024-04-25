@@ -27,7 +27,8 @@ export const expressValidationUtils = () => {
             check('senha').isLength({ min: 8 }).withMessage('O campo senha deve ter no mínimo 8 caracteres!'),
             check('genero').notEmpty().withMessage('O campo gênero não pode estar vazio!'),
             check('cpf').notEmpty().withMessage('O campo CPF não pode estar vazio!'),
-            check('phone_number').notEmpty().withMessage('O campo telefone não pode estar vazio!')
+            check('phone_number').notEmpty().withMessage('O campo telefone não pode estar vazio!'),
+            check('phone_number').isNumeric().withMessage('O campo de telefone deve')
         ]
     }
 

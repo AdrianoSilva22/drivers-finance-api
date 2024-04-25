@@ -35,8 +35,10 @@ router.post('/save', checkSaveValidation(),
     ]
 
     try {
+      if (driver.email.valueOf() !== '' && driver.senha.valueOf() !== '') {
       const saveQueryResult = await saveDriver(driver, values)
       res.send("Motorista Cadastrado com Sucesso!").status(200)
+      }
     } catch (error: any) {
       if (error.errno == 1062) {
         if (error.sqlMessage.includes('driver.email')) {
@@ -55,9 +57,7 @@ router.post('/save', checkSaveValidation(),
 router.post('/login', checkLoginValidation(),
 
   async (req: Request, res: Response) => {
-
     await handleRequestValidation(req, res)
-
     const driver: Driver = req.body
 
     const values = [
@@ -75,9 +75,14 @@ router.post('/login', checkLoginValidation(),
     }
 
     try {
+     
+      if (driver.email.valueOf() !== '' && driver.senha.valueOf() !== '') {
+       
       const queryResultLoginDriver = await loginDriver(driver, driverDataToken, values)
 
       if (queryResultLoginDriver.success == true) {
+        console.log('oi1');
+
         res.status(200).json({
           token: queryResultLoginDriver.token,
           message: queryResultLoginDriver.messageSuccess
@@ -86,8 +91,14 @@ router.post('/login', checkLoginValidation(),
         res.status(400).json({
           message: queryResultLoginDriver.messageError
         })
+        console.log('entrou');
+
       }
+    }
+
     } catch (error) {
+      console.log(error);
+
       res.status(400).send("Ops, algo deu errado. Tente novamente ou contate o admim.")
     }
   })

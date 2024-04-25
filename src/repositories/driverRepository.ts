@@ -27,11 +27,11 @@ export const driverRepository = () => {
             const queryResult = await con.query(sql, values) as [][]
             let passwordVerified = false
             let password = ""
-            
+
             if (queryResult[0].length > 0) {
-                 const passwordQueryResult = queryResult[0] as { senha: string }[]
-                 password = passwordQueryResult[0].senha
-            } 
+                const passwordQueryResult = queryResult[0] as { senha: string }[]
+                password = passwordQueryResult[0].senha
+            }
 
             const token = generateToken(driverDataToken)
 
