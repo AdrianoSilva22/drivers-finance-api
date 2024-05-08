@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 import { Request, Response } from 'express';
 import jwt from "jsonwebtoken";
-import { Driver } from "../models/driverModel";
+import { Driver } from "../database/postgresql/model/driverModel";
 dotenv.config()
 
 export const tokenUtils = () => {

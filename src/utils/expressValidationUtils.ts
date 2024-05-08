@@ -3,7 +3,7 @@ import { check, validationResult } from "express-validator";
 
 export const expressValidationUtils = () => {
 
-    const handleRequestValidation = (req: Request, res: Response) => {
+    const handleRequestValidation = (req: Request, res: Response) => { // não é uma boa fazer uma req pra tu fazer a validação , o que está validando ?
         const erros = validationResult(req)
 
         if (!erros.isEmpty()) {
@@ -11,7 +11,7 @@ export const expressValidationUtils = () => {
         }
     }
 
-    const checkLoginValidation = () => {
+    const checkLoginValidation = () => { // onde que tu recebe o que vai validar ? e se eu quiser adicionar mais um campo pra validar ?
 
         return [
             check('email').notEmpty().withMessage('O campo de email não pode estar vazio!'),

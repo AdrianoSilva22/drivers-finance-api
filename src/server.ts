@@ -1,21 +1,18 @@
 import cors from 'cors'
 import express from 'express'
-import driver from './routes/driver'
-import expense from './routes/expense'
-import income from './routes/income'
+import * as dotenv from "dotenv"
+import { DriverRouter } from './routes/driver'
+
 const app = express()
+
+const PORT = parseInt(process.env.PORT || '8085', 10)
 
 app.use(cors())
 
-import * as dotenv from "dotenv"
 dotenv.config()
 
 app.use(express.json())
 
-app.use('/driver', driver)
-app.use('/income', income)
-app.use('/expense', expense)
+app.use(new DriverRouter().getRouter())
 
-app.listen(process.env.PORT, () => console.log(`funcionando na porta ${process.env.PORT}`))
-
-
+app.listen(PORT, () => console.log(`funcionando na porta ${PORT}`))
